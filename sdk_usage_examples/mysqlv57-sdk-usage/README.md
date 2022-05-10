@@ -12,71 +12,73 @@
 # 使用方法
 
 ## 第零步：安装datagrandSDK
-临时方案:下载SDK源码，手动移动至python的site-package文件夹中   
-或其他方式，将此源码作为本地python库，加入到项目Project中也可以
+
+`临时方案`: 手动下载SDK源码，文件夹至python的site-package文件夹中   
+或采取其他，将代码文件夹以本地库的方式加入到项目Project中也可以达到同样效果
+
 ```
-wget http://datagrand.com/dowload/datagrandSDK.tar.gz  # 后续提供
+wget http://datagrand.com/dowload/datagrandSDK.tar.gz
 tar -zxvf datagrandSDK.tar.gz -C /usr/lib/python3.6/site-packages
 ```
-目标方案：从pip源中直接下载 `(TODO:datagrandSDK发布至PyPi)`
+
+**目标方案**：从pip源中直接下载 `(TODO:datagrandSDK发布至PyPi)`
+
 ```
 pip3 install -U datagrandSDK
 ```
 
-## 第一步：定义model以及创建表
-```
-主要包含两个动作：
-    1. model定义
-    2. 调用SDK中提供的setup_db工具函数，在mysql服务端创建数据表
-    
-补充说明：
-    1. model定义：此部分正常应当有一个独立的文件，把所有表模型的定义放在一处，此样例只定义两个model的对象来做参考
-    2. 创建表：此动作主要在开发或部署阶段使用（包含初创表，以及表升级）
-              同时创建(更新)表的动作也可人工代替如：DDL语句执行，或sql导入等方式方法
-              另外：此步骤用到的setup_db工具函数实际内置包含了SDK初始化的动作，具体将会在步骤二中进行介绍，此处先略过
-```
-请看代码：
+## 第一步：定义model(定义数据表)
+基于SDK中提供的BaseModel进行自定义需要的model。而BaseModel，实际是基于SqlAlchemy的declarative_base()封装而来。   
+请看代码：`通过一个model定义举例，实际可自定义多个，可参考样例代码提供的内容`
 ```python
 # -*- coding: utf-8 -*-
 
-import logging
-
 from datagrandSDK.mysql.v57.mysql_model import BaseModel, Column
 from datagrandSDK.mysql.v57.mysql_model import Integer, Float, String, Text, DateTime, JSON, ForeignKey
-from datagrandSDK.mysql.v57.utils import setup_db
-
 
 # 定义model(mysql数据表)对象
 class User(BaseModel):
     __tablename__ = 'user'
-    
+
+    """
+    补充说明：其中BaseModel里面定义了5个基础对象：id,name,description,create_time,update_time
+    经此定义，实际user表最终包含5+6=11个字段属性
+    """
+
     phone = Column(String(16), nullable=False, unique=True, comment='手机号')
     sex = Column(String(4), comment='性别')
     age = Column(Integer, comment='年龄')
     height = Column(Float(precision="2,2"), comment='身高(m)')
     weight = Column(Float(precision="4,2"), comment='体重(KG)')
-    background = Column(Text, comment='背景信息')
+    background = Column(JSON, comment='背景信息')
     
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
-    
-    # 补充说明：其中BaseModel里面定义了5个基础对象：id,name,description,create_time,update_time
-    # 实际此user表的字段个数为5+6=11个字段
+```
 
+## 第二步：调用SDK工具方法创建mysql数据表(或更新表结构)
+SDK中的utils工具类中已提供setup_db_table()方法,该方法会自动获取所有`基于BaseModel定义`的所有models。   
+然后在mysql服务端逐个创建, 当碰到`表名已存在(重复)`的情况下会自动跳过。 关于具体使用的补充说明如下：
+```
+1. 创建表结构，调用utils.setup_db_table()，主要在搭建开发环境或部署阶段使用
+2. 更新表结构，调用utils.update_db_schema()，主要在开发和升级过程中出现model定义更新的情况
+3. setup_db_table(已完成)和update_db_schema(进行中)均为可独立直接执行的工具方法，内部实际已包含初始化SDK的动作
+4. 创建表或更新表这两个动作，实际也可以人工执行如DDL语句执行，或sql导入等方式方法.最终保证model定义与数据表相一致即可
+```
+请看代码
+```python
+import logging
 
-# 调用setup_db()同步至mysql服务生成实际的数据表        
+from datagrandSDK.mysql.v57.utils import setup_db_table
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(message)s',
                         datefmt='[%Y%m%d|%H:%M:%S]')
     
-    # 提供mysql链接信息配置文件，调用工具函数直接创建表
-    setup_db('mysql_config.json')
-
+    setup_db_table('mysql_config.json')
 ```
-
 运行后正常即可出现如下日志信息：
-
 ```bash
 [20220508|16:32:34] INFO 读取Mysql配置文件
 [20220508|16:32:34] INFO ................成功
@@ -84,11 +86,11 @@ if __name__ == '__main__':
 [20220508|16:32:34] INFO 开始创建mysql数据表
 [20220508|16:32:34] INFO ..................创建完成
 ```
-
 在数据库中即可看到实际的表结构信息，如下：
-![image](https://user-images.githubusercontent.com/10021488/167288808-f43f3acf-9463-48bd-9706-ffeaf5eb4ef6.png)
 
-### 第二步：通过SDK操作mysql数据（读写数据）
+### 第三步：初始化SDK
+### 第四步：通过SDK操作mysql数据（读写数据）
+
 ```
 主要包含四个部分个部分：
     第一部分：初始化mysql-SDK
@@ -112,7 +114,9 @@ if __name__ == '__main__':
              此部分在一些涉及到统计计算（比如按不同维度来统计不同时间区间的同环比等），或批量更新等操作。
              Python也可以完成，但是就不如Mysql计算引擎本身去执行来的更加快捷。
 ```
+
 请看代码
+
 ```python
 # -*- coding: utf-8 -*- #
 
@@ -400,9 +404,9 @@ class UserService(object):
     def complex_sql_operation():
         # 模拟生成sql的方法
         def generate_sql():
-            sql_str = "select sex, count(*) as a, sum(weight)/sum(height) as b, sum(height)/count(*) as c " \
-                      "from user " \
-                      "where create_time > '2021-01-01' " \
+            sql_str = "select sex, count(*) as a, sum(weight)/sum(height) as b, sum(height)/count(*) as c "
+                      "from user "
+                      "where create_time > '2021-01-01' "
                       "group by sex"
             return sql_str
         
@@ -420,6 +424,7 @@ class UserService(object):
         
         return result
 ```
+
 ```python3
 user_service = UserService()
 user_service.add_user()

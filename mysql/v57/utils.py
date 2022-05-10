@@ -14,7 +14,7 @@ from .mysql_model import Base
 """
 
 
-def setup_db(mysql_config_file):
+def setup_db_table(mysql_config_file):
     """
     根据所有表的model定义来自动在数据库服务端创建所有表
     当出现数据表重名（表已存在）则跳过该表创建下一个
@@ -37,7 +37,7 @@ def setup_db(mysql_config_file):
         exit(1)
 
 
-def upgrade_db():
+def update_db_schema():
     """
     根据所有表的model定义来对服务端的数据库表结构进行更新操作
     此工具函数适合在【开发阶段】和【版本升级时】场景下执行
