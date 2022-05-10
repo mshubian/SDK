@@ -38,7 +38,7 @@ mysql_client = init_mysql_sdk('mysql_config.json')
 
 class UserService(object):
     
-    # 第二部分：增加数据
+    # 第四部分：增加数据
     @staticmethod
     def add_user():
         """添加数据至mysql数据表中
@@ -93,7 +93,7 @@ class UserService(object):
             new_user2.as_dict()
         ]
     
-    # 第二部分：删除数据
+    # 第四部分：删除数据
     @staticmethod
     def delete_user():
         """删除mysql数据表的数据（此方法为物理删除，若要实现逻辑删除改用update数据方法更新【标识字段】来代替）
@@ -109,20 +109,20 @@ class UserService(object):
         
         logging.info("第二种删除方法-1：对应底层的query.filter()")
         # 第二种方式-1：通过查询条件进行删除，以下方法均可会直接在数据库中生效
-        mysql_client.delete_all_objects(User, User.age > 30)
-        mysql_client.delete_all_objects(User, User.sex == 30)
-        mysql_client.delete_all_objects(User, User.age.in_([10, 20, 30, 40, 50, 60]))
-        mysql_client.delete_all_objects(User, User.name.like('%%'))
-        mysql_client.delete_all_objects(User, User.age == 30 and User.sex == '女')  # 逻辑组合条件
-        mysql_client.delete_all_objects(User, User.age >= 30 or User.sex == '男')  # 逻辑组合条件
+        mysql_client.delete_all_objects_filter(User, User.age > 30)
+        mysql_client.delete_all_objects_filter(User, User.sex == 30)
+        mysql_client.delete_all_objects_filter(User, User.age.in_([10, 20, 30, 40, 50, 60]))
+        mysql_client.delete_all_objects_filter(User, User.name.like('%%'))
+        mysql_client.delete_all_objects_filter(User, User.age == 30 and User.sex == '女')  # 逻辑组合条件
+        mysql_client.delete_all_objects_filter(User, User.age >= 30 or User.sex == '男')  # 逻辑组合条件
         
         logging.info("第二种删除方法-2：对应底层的query.filter_by()")
         # 第二种方式-2：针对等式判断也使用可稍简化一点的方法
-        mysql_client.delete_all_objects_by(User, id=30)  # 等式查询
-        mysql_client.delete_all_objects_by(User, age=40, sex='女')  # 联等式查询
-        mysql_client.delete_all_objects_by(User, {"age": 40, "sex": "女"})  # 连等式dict查询条件
+        mysql_client.delete_all_objects_filter_by(User, id=30)  # 等式查询
+        mysql_client.delete_all_objects_filter_by(User, age=40, sex='女')  # 联等式查询
+        mysql_client.delete_all_objects_filter_by(User, {"age": 40, "sex": "女"})  # 连等式dict查询条件
     
-    # 第二部分：修改数据
+    # 第四部分：修改数据
     @staticmethod
     def update_user():
         """更新mysql数据表中的某一行（即某一个具体的model对象）的内容
@@ -187,8 +187,8 @@ class UserService(object):
             get_first_object_by
 
             【多条数据筛选查询：默认以倒序返回列表】
-            get_all_objects(self, model_obj, *criterion)
-            get_all_objects_by(self, model_obj, **kwargs)
+            get_all_objects_filter(self, model_obj, *criterion)
+            get_all_objects_filter_by(self, model_obj, **kwargs)
 
             【分页筛选查询：默认以倒序返回制定长度的列表】
             get_all_objects_page(self, page_num, model_obj, page_size=100, *criterion)
@@ -219,11 +219,16 @@ class UserService(object):
         
         # 查询多条数据: 默认返回结果均以倒序返回
         condition = User.age == 30 or User.sex != '女' and User.create_time > '2022-01-01'
-        user_list = mysql_client.get_all_objects(User, *condition)
-        user_list = mysql_client.get_all_objects_by(User, age=30, set='男')
-        user_list = mysql_client.get_all_objects_by(User, {"age": 30, "set": '男'})
+        condition = condition and User.background is not None or User.description.in_(['', '空'])
+        user_list = mysql_client.get_all_objects_filter(User, *condition)
+        user_list = mysql_client.get_all_objects_filter_by(User, age=30, set='男')
+        user_list = mysql_client.get_all_objects_filter_by(User, {"age": 30, "set": '男'})
         
-        # 分页查询：2：页数，10：每页长度 (查询条件同上文介绍相一致)
+        # 查询多条数据：按照指定排序字段返回
+        user_list = mysql_client.get_all_objects_order_filter(User, User.height, User.sex == '男')
+        user_list = mysql_client.get_all_objects_order_filter_by(User, User.height, sex='男')
+        
+        # 分页查询：页数2，页长度10
         page_user_list = mysql_client.get_all_objects_page(User, 2, 10, User.sex == '男')
         page_user_list = mysql_client.get_all_objects_page_by(User, 2, 10, sex='男')
         
@@ -273,17 +278,18 @@ class UserService(object):
         result = []
         
         # 获取所有角色
-        role_list = mysql_client.get_all_objects(Role)
+        role_list = mysql_client.get_all_objects_filter(Role)
         for role in role_list:
+            # 制定返回结果列表中元素的格式内容
             role_data = {
                 "role_id": role.id,
                 "role_name": role.name
             }
             
             # 获取此角色所关联的所有用户ID列表，从而获取此角色关联的所有用户信息
-            rel_list = mysql_client.get_all_objects_by(UserRoleRel, role_id=role.id)
+            rel_list = mysql_client.get_all_objects_filter_by(UserRoleRel, role_id=role.id)
             user_id_list = [rel.user_id for rel in rel_list]  # 获取关联所有的user_id列表
-            user_list = mysql_client.get_all_objects(User, User.id in user_id_list)  # 根据ID列表查询用户列表
+            user_list = mysql_client.get_all_objects_filter(User, User.id in user_id_list)  # 根据ID列表查询用户列表
             
             # 将用户列表信息塞入至角色信息中
             role_data['user_num'] = len(user_list)

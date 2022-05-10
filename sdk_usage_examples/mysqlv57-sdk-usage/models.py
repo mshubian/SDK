@@ -4,32 +4,22 @@ from datagrandSDK.mysql.v57.mysql_model import BaseModel, Column
 from datagrandSDK.mysql.v57.mysql_model import Integer, Float, String, Text, DateTime, JSON, ForeignKey
 
 """
-达观mysql-sdk工具使用步骤一：【model定义以及创建表】
+达观mysql-sdk工具使用步骤一：【基于BaseModel定义model】
 
-主要包含两个动作：
-    1. model定义
-    2. 调用SDK中提供的setup_db工具函数，在mysql服务端创建数据表
+BaseModel中已包含常规默认的5个属性如下：
+id = Column(Integer, primary_key=True, autoincrement=True)
+name = Column(String, comment="名称")
+description = Column(Text, comment="备注描述")
+create_time = Column(DateTime, default=datetime.now, comment="修改时间")
+update_time = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment="最近修改时间", index=True)
 
-补充说明：
-    1. model定义：此部分正常应当有一个独立的文件，把所有表模型的定义放在一处，此样例只定义两个model的对象来做参考
-    2. 创建表：此动作实主要在开发或部署阶段使用（包含初创表，以及表升级）
-              同时创建(更新)表的动作也可人工代替如：DDL语句执行，或sql导入等方式方法
-              另外：此步骤用到的setup_db工具函数实际内置包含了SDK初始化的动作，具体将会在步骤二中进行介绍，此处先略过
+开发者自定义model(基于表设计填充字段)。（当然，BaseModel里面的字段仍然是可以重新定义的）
 """
 
 
 class User(BaseModel):
     """
     model定义: 用户表
-
-    BaseModel中已包含常规默认的5个属性如下：
-        id = Column(Integer, primary_key=True, autoincrement=True)
-        name = Column(String, comment="名称")
-        description = Column(Text, comment="备注描述")
-        create_time = Column(DateTime, default=datetime.now, comment="修改时间")
-        update_time = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment="最近修改时间", index=True)
-
-    每个模型的定义基于表设计进行实际填充字段。（当然，BaseModel里面的字段仍然是可以重新定义的）
     最终User表对象包含5+6=11个column字段
     """
     __tablename__ = 'user'

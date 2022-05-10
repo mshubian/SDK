@@ -111,42 +111,42 @@ class SQLAlchemyAdapter(DBAdapter):
 
         return model_obj.query.get(model_id)
     
-    def get_first_object(self, model_obj, *criterion):
+    def get_first_object_filter(self, model_obj, *criterion):
         return model_obj.query.filter(*criterion).first()
     
-    def get_first_object_by(self, model_obj, **kwargs):
+    def get_first_object_filter_by(self, model_obj, **kwargs):
         return model_obj.query.filter_by(**kwargs).first()
     
-    def get_all_objects(self, model_obj, *criterion):
+    def get_all_objects_filter(self, model_obj, *criterion):
         return model_obj.query.filter(*criterion).order_by(desc(model_obj.id)).all()
     
-    def get_all_objects_by(self, model_obj, **kwargs):
+    def get_all_objects_filter_by(self, model_obj, **kwargs):
         return model_obj.query.filter_by(**kwargs).order_by(desc(model_obj.id)).all()
 
-    def get_all_objects_page(self, model_obj, page_num, page_size=100, *criterion):
+    def get_all_objects_page_filter(self, model_obj, page_num, page_size=100, *criterion):
         begin = (page_num - 1) * page_size
         return model_obj.query.filter(*criterion).order_by(desc(model_obj.id)).limit(page_size).offset(begin)
     
-    def get_all_objects_page_by(self, model_obj, page_num, page_size=100, **kwargs):
+    def get_all_objects_page_filter_by(self, model_obj, page_num, page_size=100, **kwargs):
         begin = (page_num - 1) * page_size
         return model_obj.query.filter_by(**kwargs).order_by(desc(model_obj.id)).limit(100).offset(begin)
 
-    def get_all_objects_order(self, model_obj, order_by, **kwargs):
-        return model_obj.query.filter_by(**kwargs).order_by(*order_by).all()
+    def get_all_objects_order_filter(self, model_obj, order, *criterion):
+        return model_obj.query.filter(*criterion).order_by(order).all()
     
-    def get_all_objects_order_by(self, model_obj, order_by, **kwargs):
-        return model_obj.query.filter_by(**kwargs).order_by(order_by).all()
+    def get_all_objects_order_filter_by(self, model_obj, order, **kwargs):
+        return model_obj.query.filter_by(**kwargs).order_by(order).all()
     
-    def get_all_objects_group(self, model_obj, group_by, *criterion):
+    def get_all_objects_group_filter(self, model_obj, group_by, *criterion):
         return model_obj.query.filter(*criterion).group_by(group_by).all()
     
-    def get_all_objects_group_by(self, model_obj, *group_by, **kwargs):
+    def get_all_objects_group_filter_by(self, model_obj, *group_by, **kwargs):
         return model_obj.query.filter_by(**kwargs).group_by(*group_by).all()
     
-    def count(self, model_obj, *criterion):
+    def count_filter(self, model_obj, *criterion):
         return model_obj.query.filter(*criterion).count()
     
-    def count_by(self, model_obj, **kwargs):
+    def count_filter_by(self, model_obj, **kwargs):
         return model_obj.query.filter_by(**kwargs).count()
     
     # -------------------- 其他：提供直接执行sql语句的方式，增加扩展性，以备不时之需 ------------------ #
