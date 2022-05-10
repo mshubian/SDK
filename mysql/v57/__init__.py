@@ -20,9 +20,11 @@ def init_mysql_sdk(mysql_config_file):
         第二步：连接验证mysql访问信息
         第三步：生成mysql_sdk实例对象并返回
     """
+    logging.info("开始初始化加载datagrand-mysql-sdk")
     conn_str = load_mysql_config(mysql_config_file)
     db_session = conn_mysql(conn_str)
     BaseModel.query = db_session.query_property()
+    logging.info("datagrand-mysql-sdk加载完成")
     return SQLAlchemyAdapter(db_session)
 
 
@@ -31,7 +33,7 @@ def conn_mysql(mysql_conn_str):
     连接mysql，验证配置信息，并返回链接session对象
     """
     try:
-        logging.info("加载Mysql链接信息")
+        logging.info("连接接数据库")
         mysql_engine = create_engine(mysql_conn_str,
                                      convert_unicode=True,
                                      pool_size=50,
@@ -39,7 +41,6 @@ def conn_mysql(mysql_conn_str):
                                      echo=False)
         db_session = scoped_session(sessionmaker(bind=mysql_engine))
         logging.info(".......................成功")
-        logging.info("Mysql加载完成")
         return db_session
     
     except Exception as ex:
