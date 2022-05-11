@@ -6,7 +6,7 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from .mysql_client import SQLAlchemyAdapter
+from .mysql_client import SQLAlchemyClient
 from .mysql_model import BaseModel
 
 
@@ -25,7 +25,7 @@ def init_mysql_sdk(mysql_config_file):
     db_session = conn_mysql(conn_str)
     BaseModel.query = db_session.query_property()
     logging.info("datagrand-mysql-sdk加载完成")
-    return SQLAlchemyAdapter(db_session)
+    return SQLAlchemyClient(db_session)
 
 
 def conn_mysql(mysql_conn_str):

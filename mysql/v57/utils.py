@@ -37,7 +37,7 @@ def setup_db_table(mysql_config_file):
         exit(1)
 
 
-def update_db_schema():
+def update_db_schema(mysql_config_file):
     """
     根据所有表的model定义来对服务端的数据库表结构进行更新操作
     此工具函数适合在【开发阶段】和【版本升级时】场景下执行

@@ -9,14 +9,23 @@ from .mysql_model import BaseModel
 
 
 class SQLAlchemyAdapterMetaClass(type):
+    """
+    此类主要是加入一个基类，通过基类增加一些必要通用操作，如：auto_commit操作.
+    我们在使用sqlalchemy时出现过查询类的动作也需要加上commit才能正常的得到返回结果。因此想把所有的读写操作方法都进行一个commit动作
+    采用基类能够避免重复，而且此部分工作还需要深究下，找到具体原因后，或可删除此部分内容。（也可能是因为版本老旧的问题所导致）
+    
+    TODO: 重新确认下此部分的内容，予以更新。
+    """
+    
     @staticmethod
-    def wrap(func):
-        """Return a wrapped instance method"""
+    def auto_commit(func):
+        """
+        构建一个装饰器，方便进行自动commit操作
+        TODO: 此次后续需优化（此处是一刀切的方式把读写操作都进行commit动作）
+        """
         
-        
-        def auto_commit(self, *args, **kwargs):
+        def wrap(self, *args, **kwargs):
             try:
-                # todo a trick for DB transaction issue
                 return_value = func(self, *args, **kwargs)
                 self.commit()
                 return return_value
@@ -25,32 +34,42 @@ class SQLAlchemyAdapterMetaClass(type):
                 log.error(ex)
                 raise
         
-        return auto_commit
+        return wrap
     
     def __new__(mcs, name, bases, attrs):
-        """If the method in this list, DON'T wrap it"""
         no_wrap = ["commit", "merge", "rollback", "remove", "session"]
         
         def wrap(method):
             """private methods are not wrapped"""
             if method not in no_wrap and not method.startswith("__"):
-                attrs[method] = mcs.wrap(attrs[method])
+                attrs[method] = mcs.auto_commit(attrs[method])
         
         map(lambda m: wrap(m), attrs.keys())
         return super(SQLAlchemyAdapterMetaClass, mcs).__new__(mcs, name, bases, attrs)
 
 
 class DBAdapter(object):
+    """
+    此父类主要的主要目的是对整个Client进行分层：
+        面向基础服务端【对内】：如面向数据基础服务相关的，如连接池，session池，以及必要的一些增强扩展等 （TODO）
+        面向应用操作端【对外】：把具体应用方法(具体数据操作)放在子类(SQLAlchemyClient)中
+    """
+    
     def __init__(self, db_session):
         self.db_session = db_session
 
 
-class SQLAlchemyAdapter(DBAdapter):
-    """Use MetaClass to make this class"""
+class SQLAlchemyClient(DBAdapter):
+    """
+    面向开发者，提供的mysql数据库数据操作想过的工具类。
+    整个工具类的核心实际上仍是基于sqlalchemy进行简单封装而来。（主要是Model继承declarative_base()而来）
+    """
+    
+    # 通过基元类来构建对象：把auto_commit()的动作引入进来
     __metaclass__ = SQLAlchemyAdapterMetaClass
     
     def __init__(self, db_session):
-        super(SQLAlchemyAdapter, self).__init__(db_session)
+        super(SQLAlchemyClient, self).__init__(db_session)
     
     # ------------------ ORM  basic functions -------------------- #
     
@@ -72,20 +91,34 @@ class SQLAlchemyAdapter(DBAdapter):
     # -------------------- 增：新增对象insert至table中 ------------------ #
     
     def add_object(self, model_instance):
+        """添加数据：将一个model实例插入至数据表中
+        
+        :param model_instance: 具体Model对象的结果实例
+        :return:
+        """
         self.db_session.add(model_instance)
         self.commit()
     
     # -------------------- 删：删除table中的对象数据，此操作为物理删除 ------------------ #
     
-    def delete_object(self, instance):
-        """ Delete object 'object'. """
-        self.db_session.delete(instance)
+    def delete_object(self, model_instance):
+        """删除一条数据：物理删除删除一个具体的model实例
+
+        :param model_instance: 具体Model对象的结果实例
+        :return:
+        """
+        self.db_session.delete(model_instance)
     
     def delete_all_objects(self, model_obj, *criterion):
+        
         model_obj.query.filter(*criterion).delete(synchronize_session=False)
     
     def delete_all_objects_by(self, model_obj, **kwargs):
-        """ Delete all objects matching the case sensitive filters in 'kwargs'. """
+        """删除多条数据：根据匹配条件，筛选删除多条数据（物理删除）
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行删除动作）
+        :return:
+        """
         
         # Convert each name/value pair in 'kwargs' into a filter
         query = model_obj.query.filter_by(**kwargs)
@@ -108,7 +141,7 @@ class SQLAlchemyAdapter(DBAdapter):
     
     def get_object(self, model_obj, model_id) -> BaseModel:
         """ Retrieve one object specified by the primary key 'pk' """
-
+        
         return model_obj.query.get(model_id)
     
     def get_first_object_filter(self, model_obj, *criterion):
@@ -122,7 +155,7 @@ class SQLAlchemyAdapter(DBAdapter):
     
     def get_all_objects_filter_by(self, model_obj, **kwargs):
         return model_obj.query.filter_by(**kwargs).order_by(desc(model_obj.id)).all()
-
+    
     def get_all_objects_page_filter(self, model_obj, page_num, page_size=100, *criterion):
         begin = (page_num - 1) * page_size
         return model_obj.query.filter(*criterion).order_by(desc(model_obj.id)).limit(page_size).offset(begin)
@@ -130,7 +163,7 @@ class SQLAlchemyAdapter(DBAdapter):
     def get_all_objects_page_filter_by(self, model_obj, page_num, page_size=100, **kwargs):
         begin = (page_num - 1) * page_size
         return model_obj.query.filter_by(**kwargs).order_by(desc(model_obj.id)).limit(100).offset(begin)
-
+    
     def get_all_objects_order_filter(self, model_obj, order, *criterion):
         return model_obj.query.filter(*criterion).order_by(order).all()
     
@@ -167,7 +200,7 @@ class SQLAlchemyAdapter(DBAdapter):
         
         except ResourceClosedError:
             return None
-
+        
         except Exception as ex:
             log.error(ex)
             return None
