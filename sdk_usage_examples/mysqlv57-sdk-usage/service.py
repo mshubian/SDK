@@ -8,37 +8,34 @@ from datagrandSDK.mysql.v57 import init_mysql_sdk
 from models import User, Role, UserRoleRel
 
 """
-达观mysql-sdk工具使用步骤二：【初始化SDK以及操作mysql数据（读写）】
+达观mysql-sdk工具使用步骤四：【通过SDK操作读写数据】
 
-主要包含三个部分：
-    第一部分：初始化mysql-SDK
-    第二部分：调用SDK提供的常用方法读写数据库（样例展示增删改查四个基础方法）
-    第三部分：Python+SDK联合完成多表操作(通过一个例子介绍)
-    第四部分：生成sql语句，通过SDK推送至mysql服务端去执行
+主要通过三类使用方法来介绍SDK中mysql_client的使用方法：
+
+    第一类：单表 ’增’ ‘删’ ‘改’ ‘查‘
+    第二类：多表或联表综合查询操作 （通过Python代码+mysql_client二者结合实现）
+    第三类：原生SQL的执行
 
 补充说明：
-    第一部分：此动作应当在“服务初始化”时执行，可将初始化的结果对象mysql_client塞入全局变量中
-            后续Service层或其他需要使用此client可从全局变量中快速获取
 
-    第二部分：主要针对SDK提供常用工具类方法（增删改查）来对model对象（数据库单表数据）进行常用操作
-             这个部分的代码主要在Service层多次出现，提供统一的一套工具函数来支撑不同service与数据的常规操作
-             这个部分也是SDK使用的关键信息，请逐个吸收和理解，若碰到疑问请随时联系我们 (arch-team@datagrand.com)
+    第一类：主要针对SDK提供常用工具方法（增删改查）来对不同model对象（数据表）进行常用操作
+           此部分也是SDK使用的关键内容，请逐个吸收和理解，活学活用。若碰到疑问请随时联系我们 (arch-team@datagrand.com)
 
-    第三部分：主要通过一个例子示范Python代码+SDK完成跨表或联表的数据操作（查询操作）
-             此部分主要通过SDK进行单表操作，通过python代码进行【串联】代码操作，整体完成多表联表查询等逻辑
+    第二类：SDK本身不提供直接的联表(join)操作，通过一个例子介绍示范Python代码+SDK二者结合来完成多表(联表)的查询需求
+           SDK提供单表操作，经过python代码进行【串联】，整体完成多表联表查询等逻辑需求
 
-    第四部分：主要针对一些复杂sql场景，通过生成sql直接交由MySQL执行（直接执行sql比python+SDK更加方便）
-             此部分在一些涉及到统计计算（比如按不同维度来统计不同时间区间的同环比等），或批量更新等操作。
-             Python也可以完成，但是就不如Mysql计算引擎本身去执行来的更加快捷。
+    第三类：主要针对一些复杂sql场景，通过生成sql直接交由MySQL去执行获取返回结果。解决两方面问题：
+           一方面：提升SDK的覆盖度，当碰到特殊需求SDK不支持时，可先通过执行sql来解决。（同步也请反馈需求推进SDK迭代）
+           另一方面：希望能发挥出数据库本身【计算引擎】的能力（特别是涉及复杂多维度统计计算时，执行sql会比python处理更加方便快捷）
 """
 
-# 第一部分：通过制定的mysql连接配置信息，直接初始化SDK
+# 通过制定的mysql连接配置信息，直接初始化SDK
 mysql_client = init_mysql_sdk('mysql_config.json')
 
 
 class UserService(object):
     
-    # 第四部分：增加数据
+    # 单表：增加数据
     @staticmethod
     def add_user():
         """添加数据至mysql数据表中
@@ -93,7 +90,7 @@ class UserService(object):
             new_user2.as_dict()
         ]
     
-    # 第四部分：删除数据
+    # 单表：删除数据
     @staticmethod
     def delete_user():
         """删除mysql数据表的数据（此方法为物理删除，若要实现逻辑删除改用update数据方法更新【标识字段】来代替）
@@ -122,7 +119,7 @@ class UserService(object):
         mysql_client.delete_all_objects_filter_by(User, age=40, sex='女')  # 联等式查询
         mysql_client.delete_all_objects_filter_by(User, {"age": 40, "sex": "女"})  # 连等式dict查询条件
     
-    # 第四部分：修改数据
+    # 单表：修改数据
     @staticmethod
     def update_user():
         """更新mysql数据表中的某一行（即某一个具体的model对象）的内容
@@ -156,7 +153,7 @@ class UserService(object):
         # 将更新的结果数据，以dict对象返回给调用方
         return user.as_dict()
     
-    # 第二部分：查询数据(根据条件筛选查询数据)
+    # 单表：查询数据(根据条件筛选查询数据)
     @staticmethod
     def get_user_list():
         """查询数据
@@ -249,7 +246,7 @@ class UserService(object):
         # return [logic_with_user(user) for user in user_list] # 也可以额外逻辑处理
         return [user.as_dict() for user in user_list]
     
-    # 第三部分：综合类联表查询（涉及到多个表的操作）
+    # 多表：综合类联表查询（涉及到多个表的操作）
     @staticmethod
     def get_role_user_list():
         """ 涉及多表关联信息的操作
@@ -300,7 +297,7 @@ class UserService(object):
         
         return result
     
-    # 第四部分：更复杂的数据查询或数据处理相关(通过生成sql语句，交由mysql执行，获取其返回结果)
+    # 原生SQL执行：更复杂的数据查询或数据处理相关(通过生成sql语句，交由mysql执行，获取其返回结果)
     @staticmethod
     def complex_sql_operation():
         # 模拟生成sql的方法

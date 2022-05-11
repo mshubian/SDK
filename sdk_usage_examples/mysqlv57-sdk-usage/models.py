@@ -13,14 +13,14 @@ description = Column(Text, comment="备注描述")
 create_time = Column(DateTime, default=datetime.now, comment="修改时间")
 update_time = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment="最近修改时间", index=True)
 
-开发者自定义model(基于表设计填充字段)。（当然，BaseModel里面的字段仍然是可以重新定义的）
+开发者自定义model(对照表设计填充字段)。（当然，BaseModel里面的字段仍然是可以重新定义的）
 """
 
 
 class User(BaseModel):
     """
     model定义: 用户表
-    最终User表对象包含5+6=11个column字段
+    经此定义, 最终User表对象包含5+6=11个column字段
     """
     __tablename__ = 'user'
     
