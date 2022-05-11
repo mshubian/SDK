@@ -110,25 +110,34 @@ class SQLAlchemyClient(DBAdapter):
         self.db_session.delete(model_instance)
     
     def delete_all_objects(self, model_obj, *criterion):
-        
+        """删除多条数据：根据匹配条件，筛选删除多条数据（物理删除）
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行删除动作）
+        :param criterion: filter式筛选匹配条件 (可多个)
+        :return:
+        """
         model_obj.query.filter(*criterion).delete(synchronize_session=False)
     
     def delete_all_objects_by(self, model_obj, **kwargs):
         """删除多条数据：根据匹配条件，筛选删除多条数据（物理删除）
 
         :param model_obj: 某个Model定义对象class。（去哪张表里面执行删除动作）
+        :param kwargs: filter_by式筛选匹配条件（dict）
         :return:
         """
-        
-        # Convert each name/value pair in 'kwargs' into a filter
+        # 删除前，先查询
         query = model_obj.query.filter_by(**kwargs)
-        
-        # query filter by in_ do not support none args, use synchronize_session=False instead
         return query.delete(synchronize_session=False)
     
     # -------------------- 改：修改表中的数据（model_object） ------------------ #
     
     def update_object(self, model_instance, **kwargs):
+        """修改单条数据：根据匹配条件，筛选删除多条数据（物理删除）
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行删除动作）
+        :param kwargs: filter_by式筛选匹配条件（dict）
+        :return:
+        """
         for key, value in kwargs.items():
             if hasattr(model_instance, key):
                 setattr(model_instance, key, value)
