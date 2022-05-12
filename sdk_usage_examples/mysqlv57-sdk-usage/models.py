@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*- #
 
-from datagrandSDK.mysql.v57.mysql_model import BaseModel, Column
-from datagrandSDK.mysql.v57.mysql_model import Integer, Float, String, Text, DateTime, JSON, ForeignKey
+from datagrandSDK.database.mysql.v57.mysql_model import BaseModel, Column
+from datagrandSDK.database.mysql.v57.mysql_model import Integer, Float, String, Text, DateTime, JSON, ForeignKey
 
 """
 达观mysql-sdk工具使用步骤一：【基于BaseModel定义model】

@@ -135,7 +135,7 @@ class SQLAlchemyClient(DBAdapter):
         """修改单条数据：对一个具体的model实例对指定属性和结果值进行修改
 
         :param model_instance: 具体Model对象的结果实例
-        :param kwargs: （dict）
+        :param kwargs: 要修改的目标字段以及目标值（dict）
         :return:
         """
         for key, value in kwargs.items():
@@ -149,57 +149,157 @@ class SQLAlchemyClient(DBAdapter):
     # -------------------- 查：针对表数据对象提供常用的几组查询方式：暂不支持跨表操作 ------------------ #
     
     def get_object(self, model_obj, model_id) -> BaseModel:
-        """ Retrieve one object specified by the primary key 'pk' """
+        """根据主键单条数据
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param model_id: 主键(model定义时制定的主键)
         
+        :return: model对象结果实例
+        """
         return model_obj.query.get(model_id)
     
     def get_first_object_filter(self, model_obj, *criterion):
+        """根据filter式查询条件查询单条数据
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param criterion: filter式查询条件
+        
+        :return: model对象结果实例
+        """
         return model_obj.query.filter(*criterion).first()
     
     def get_first_object_filter_by(self, model_obj, **kwargs):
+        """根据filter_by式查询条件查询单条数据
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param kwargs: filter_by式查询条件
+
+        :return: model对象结果实例
+        """
         return model_obj.query.filter_by(**kwargs).first()
     
     def get_all_objects_filter(self, model_obj, *criterion):
+        """根据filter式查询条件筛选查询多条数据
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param criterion: filter式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         return model_obj.query.filter(*criterion).order_by(desc(model_obj.id)).all()
     
     def get_all_objects_filter_by(self, model_obj, **kwargs):
+        """根据filter_by式查询条件筛选查询多条数据
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param kwargs: filter_by式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         return model_obj.query.filter_by(**kwargs).order_by(desc(model_obj.id)).all()
     
     def get_all_objects_page_filter(self, model_obj, page_num, page_size=100, *criterion):
+        """根据filter_by式查询条件分页查询
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param page_num: 查询第几页
+        :param page_size: 每页数据量长度，默认为300
+        :param criterion: filter式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         begin = (page_num - 1) * page_size
         return model_obj.query.filter(*criterion).order_by(desc(model_obj.id)).limit(page_size).offset(begin)
     
     def get_all_objects_page_filter_by(self, model_obj, page_num, page_size=100, **kwargs):
+        """根据filter_by式查询条件分页查询
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param page_num: 查询第几页
+        :param page_size: 每页数据量长度，默认为300
+        :param kwargs: filter_by式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         begin = (page_num - 1) * page_size
         return model_obj.query.filter_by(**kwargs).order_by(desc(model_obj.id)).limit(100).offset(begin)
     
     def get_all_objects_order_filter(self, model_obj, order, *criterion):
+        """指定排序字段，根据filter式筛选查询
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param order: 制定的排序字段
+        :param criterion: filter式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         return model_obj.query.filter(*criterion).order_by(order).all()
     
     def get_all_objects_order_filter_by(self, model_obj, order, **kwargs):
+        """指定排序字段，根据filter_by式筛选查询
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param order: 制定的排序字段
+        :param kwargs: filter_by式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         return model_obj.query.filter_by(**kwargs).order_by(order).all()
     
     def get_all_objects_group_filter(self, model_obj, group_by, *criterion):
+        """指定分组字段，根据filter式筛选进行分组查询
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param group_by: 指定的分组字段
+        :param criterion: filter式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
         return model_obj.query.filter(*criterion).group_by(group_by).all()
     
-    def get_all_objects_group_filter_by(self, model_obj, *group_by, **kwargs):
-        return model_obj.query.filter_by(**kwargs).group_by(*group_by).all()
+    def get_all_objects_group_filter_by(self, model_obj, group_by, **kwargs):
+        """指定分组字段，根据filter_by式筛选进行分组查询
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param group_by: 指定的分组字段
+        :param kwargs: filter_by式查询条件
+
+        :return: list[model]  列表：结果实例列表
+        """
+        return model_obj.query.filter_by(**kwargs).group_by(group_by).all()
     
     def count_filter(self, model_obj, *criterion):
+        """统计行数：根据filter式筛选进行统计
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param criterion: filter式查询条件
+
+        :return: Int 计数结果
+        """
         return model_obj.query.filter(*criterion).count()
     
     def count_filter_by(self, model_obj, **kwargs):
+        """统计行数：根据filter_by式筛选进行统计
+
+        :param model_obj: 某个Model定义对象class。（去哪张表里面执行查询动作）
+        :param kwargs: filter式查询条件
+
+        :return: Int 计数结果
+        """
         return model_obj.query.filter_by(**kwargs).count()
     
     # -------------------- 其他：提供直接执行sql语句的方式，增加扩展性，以备不时之需 ------------------ #
     
     def exec_sql(self, sql_str):
-        """
-        return a json/dict list object [{},{},{}]
-
+        """执行原生sql语句
+        
         :param sql_str: 完整的sql执行语句
-        :return: 根据执行结果进行返回，若有结果则以list(dict)的方式返回 （主要是考虑兼容性）
+        :return: 根据执行结果进行返回，若有结果则以list(dict)的方式返回 （主要是考虑兼容性），主要有以下三种情况：
+            第一种：[{}], 表明SQL语句无返回结果，如执行的是个写操作(update语句)
+            第二种：[{k:v},...,{k:v}], 表明SQL语句有返回结果，结果内容每行转义成一个{},最终整体以list返回
+            第三种：None, 表明SQL执行报错，需查看Error日志确认具体错误信息
         """
+        log.debug("执行原生SQL语句，内容如下：")
         log.debug(sql_str)
         try:
             sql_result = self.session().execute(sql_str)
@@ -211,5 +311,6 @@ class SQLAlchemyClient(DBAdapter):
             return None
         
         except Exception as ex:
+            log.error("SQL执行报错！！！")
             log.error(ex)
             return None

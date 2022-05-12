@@ -2,7 +2,7 @@
 
 import logging
 
-from datagrandSDK.mysql.v57.utils import setup_db_table
+from datagrandSDK.database.mysql.v57.utils import setup_db_table
 
 """
 达观mysql-sdk工具使用步骤二：【创建表】

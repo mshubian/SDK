@@ -2,7 +2,7 @@
 
 import logging
 
-from datagrandSDK.mysql.v57 import init_mysql_sdk
+from datagrandSDK.database.mysql.v57 import init_mysql_sdk
 
 """
 达观mysql-sdk工具使用步骤三：【初始化SDK】

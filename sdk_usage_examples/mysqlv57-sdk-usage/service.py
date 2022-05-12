@@ -3,7 +3,7 @@
 import logging
 import random
 
-from datagrandSDK.mysql.v57 import init_mysql_sdk
+from datagrandSDK.database.v57 import init_mysql_sdk
 
 from models import User, Role, UserRoleRel
 

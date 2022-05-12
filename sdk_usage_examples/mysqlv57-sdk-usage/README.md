@@ -59,8 +59,8 @@ pip3 install -U datagrandSDK
 ```python
 # -*- coding: utf-8 -*-
 
-from datagrandSDK.mysql.v57.mysql_model import BaseModel, Column
-from datagrandSDK.mysql.v57.mysql_model import Integer, Float, String, Text, DateTime, JSON, ForeignKey
+from datagrandSDK.database.mysql.v57.mysql_model import BaseModel, Column
+from datagrandSDK.database.mysql.v57.mysql_model import Integer, Float, String, Text, DateTime, JSON, ForeignKey
 
 
 # 定义model(mysql数据表)对象
@@ -101,7 +101,7 @@ SDK中的utils工具类中已提供setup_db_table()方法,该方法会自动获�
 ```python
 import logging
 
-from datagrandSDK.mysql.v57.utils import setup_db_table
+from datagrandSDK.database.mysql.v57.utils import setup_db_table
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
@@ -139,7 +139,7 @@ SDK已提供一个完整的初始化函数init_mysql_sdk()，给定`mysql_config
 ```python
 import logging
 
-from datagrandSDK.mysql.v57 import init_mysql_sdk
+from datagrandSDK.database.mysql.v57 import init_mysql_sdk
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
