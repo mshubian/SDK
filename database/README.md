@@ -12,4 +12,4 @@
 
 ## SDK层次图
 
-![image](https://user-images.githubusercontent.com/10021488/167999961-0db69938-3aff-4f42-91c5-df97653cf090.png)
+![image](https://user-images.githubusercontent.com/10021488/168002143-26e02c2d-09d4-48ca-9ebf-4ca7d8ca9016.png)
