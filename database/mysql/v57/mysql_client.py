@@ -132,10 +132,10 @@ class SQLAlchemyClient(DBAdapter):
     # -------------------- 改：修改表中的数据（model_object） ------------------ #
     
     def update_object(self, model_instance, **kwargs):
-        """修改单条数据：根据匹配条件，筛选删除多条数据（物理删除）
+        """修改单条数据：对一个具体的model实例对指定属性和结果值进行修改
 
-        :param model_obj: 某个Model定义对象class。（去哪张表里面执行删除动作）
-        :param kwargs: filter_by式筛选匹配条件（dict）
+        :param model_instance: 具体Model对象的结果实例
+        :param kwargs: （dict）
         :return:
         """
         for key, value in kwargs.items():
